@@ -12,7 +12,11 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Query(sort: \WebPage.order) private var webPages: [WebPage]
+    
+    // Store the current page index in UserDefaults
+    @AppStorage("lastViewedPageIndex") private var lastViewedPageIndex = 0
     @State private var currentPageIndex = 0
+    
     @State private var showAddPageSheet = false
     @State private var showSettingsSheet = false
     @State private var newPageURL = ""
@@ -106,33 +110,54 @@ struct ContentView: View {
                         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                         // Disable default animations which can cause view recycling
                         .animation(.none, value: currentPageIndex)
+                        // Save the current page index whenever it changes
+                        .onChange(of: currentPageIndex) { oldValue, newValue in
+                            if newValue >= 0 && newValue < webPages.count {
+                                lastViewedPageIndex = newValue
+                            }
+                        }
                     }
                     .id("tabview-container-\(viewsKeepAlive)")
                     
-                    // Page indicator
-                    HStack {
+                    // Page indicator and controls
+                    VStack(spacing: 0) {
+                        // Empty space where controls used to be
                         Spacer()
+                            .frame(height: 8)
                         
-                        Button(action: {
-                            showSettingsSheet = true
-                        }) {
-                            Image(systemName: "gear")
-                                .font(.system(size: 18))
+                        // Combined controls and page indicator
+                        HStack {
+                            // Settings button on the left
+                            Button(action: {
+                                showSettingsSheet = true
+                            }) {
+                                Image(systemName: "gear")
+                                    .font(.system(size: 18))
+                                    .padding(8)
+                                    .background(Color.black.opacity(0.5))
+                                    .foregroundColor(.white)
+                                    .clipShape(Circle())
+                            }
+                            .padding(.leading)
+                            
+                            Spacer()
+                            
+                            // Page indicator in the center
+                            PageIndicatorView(numberOfPages: webPages.count, currentPage: $currentPageIndex)
+                            
+                            Spacer()
+                            
+                            // Page count on the right
+                            Text("\(currentPageIndex + 1) of \(webPages.count)")
+                                .font(.caption)
                                 .padding(8)
-                                .background(Color.gray.opacity(0.2))
-                                .clipShape(Circle())
+                                .background(Color.black.opacity(0.5))
+                                .foregroundColor(.white)
+                                .clipShape(Capsule())
+                                .padding(.trailing)
                         }
-                        .padding(.trailing)
-                        
-                        Text("\(currentPageIndex + 1) of \(webPages.count)")
-                            .font(.caption)
-                            .padding(8)
-                            .background(Color.gray.opacity(0.2))
-                            .clipShape(Capsule())
-                            .padding(.trailing)
+                        .padding(.bottom, 8)
                     }
-                    .padding(.vertical, 8)
-                    .background(Color.clear)
                 }
             }
         }
@@ -158,6 +183,17 @@ struct ContentView: View {
             viewsKeepAlive = UUID()
         }
         .preferredColorScheme(isDarkMode ? .dark : .light)
+        // Restore the last viewed page when the view appears
+        .onAppear {
+            // Ensure the saved index is valid for the current number of pages
+            if !webPages.isEmpty && lastViewedPageIndex >= 0 && lastViewedPageIndex < webPages.count {
+                currentPageIndex = lastViewedPageIndex
+            } else {
+                // Reset to 0 if the saved index is invalid
+                currentPageIndex = 0
+                lastViewedPageIndex = 0
+            }
+        }
     }
     
     private func addWebPage() {
@@ -316,13 +352,33 @@ struct SettingsView: View {
         // Update the order property for each page
         for (index, page) in pagesArray.enumerated() {
             page.order = index
+            print("Setting order \(index) for page: \(page.title)")
         }
         
         // Save changes
         do {
             try modelContext.save()
+            print("Successfully saved new page orders")
+            
+            // Verify the save
+            let descriptor = FetchDescriptor<WebPage>(sortBy: [SortDescriptor(\WebPage.order)])
+            if let verifiedPages = try? modelContext.fetch(descriptor) {
+                print("Verified page orders:")
+                for page in verifiedPages {
+                    print("\(page.title): order \(page.order)")
+                }
+            }
         } catch {
             print("Failed to save reordering: \(error)")
+            // Try to recover by saving again after a short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                do {
+                    try modelContext.save()
+                    print("Successfully saved page orders on retry")
+                } catch {
+                    print("Failed to save on retry: \(error)")
+                }
+            }
         }
         
         // Update current index if needed
@@ -461,6 +517,122 @@ struct AddWebPageView: View {
         while url.hasSuffix("/") && url != "https://" {
             url.removeLast()
         }
+    }
+}
+
+// Add this new view struct after the AddWebPageView
+struct PageIndicatorView: View {
+    let numberOfPages: Int
+    @Binding var currentPage: Int
+    @GestureState private var dragOffset: CGFloat = 0
+    
+    private let maxVisibleDots = 6
+    
+    private var visibleRange: Range<Int> {
+        if numberOfPages <= maxVisibleDots {
+            return 0..<numberOfPages
+        }
+        
+        let halfVisible = maxVisibleDots / 2
+        var start = currentPage - halfVisible + 1
+        var end = start + maxVisibleDots
+        
+        // Adjust for edges
+        if start < 0 {
+            start = 0
+            end = maxVisibleDots
+        } else if end > numberOfPages {
+            end = numberOfPages
+            start = end - maxVisibleDots
+        }
+        
+        return start..<end
+    }
+    
+    private func dotSize(for index: Int) -> CGFloat {
+        if currentPage == index {
+            return 10 // Current page dot size
+        }
+        
+        // Calculate distance from current page
+        let distance = abs(index - currentPage)
+        
+        // Size decreases based on distance from current page
+        switch distance {
+        case 0:
+            return 10 // Current page
+        case 1:
+            return 8 // Adjacent to current
+        case 2:
+            return 6 // Two away
+        default:
+            return 4 // Three or more away
+        }
+    }
+    
+    private func dotOpacity(for index: Int) -> Double {
+        if currentPage == index {
+            return 1.0
+        }
+        
+        // Calculate distance from current page
+        let distance = abs(index - currentPage)
+        
+        // Opacity decreases based on distance from current page
+        switch distance {
+        case 0:
+            return 1.0 // Current page
+        case 1:
+            return 0.7 // Adjacent to current
+        case 2:
+            return 0.5 // Two away
+        default:
+            return 0.3 // Three or more away
+        }
+    }
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(Array(visibleRange), id: \.self) { index in
+                Circle()
+                    .fill(Color.white)
+                    .opacity(dotOpacity(for: index))
+                    .frame(width: dotSize(for: index), height: dotSize(for: index))
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                    )
+                    .onTapGesture {
+                        withAnimation {
+                            currentPage = index
+                        }
+                    }
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .background(
+            Capsule()
+                .fill(Color.black.opacity(0.5))
+        )
+        .gesture(
+            DragGesture()
+                .updating($dragOffset) { value, state, _ in
+                    state = value.translation.width
+                }
+                .onEnded { value in
+                    let threshold: CGFloat = 50
+                    if value.translation.width > threshold && currentPage > 0 {
+                        withAnimation {
+                            currentPage -= 1
+                        }
+                    } else if value.translation.width < -threshold && currentPage < numberOfPages - 1 {
+                        withAnimation {
+                            currentPage += 1
+                        }
+                    }
+                }
+        )
     }
 }
 

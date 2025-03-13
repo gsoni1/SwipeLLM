@@ -11,6 +11,9 @@ import SwiftData
 
 @main
 struct SwipeLLMApp: App {
+    // Add a flag to force reset of database
+    @AppStorage("shouldResetDatabase") private var shouldResetDatabase = false
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             WebPage.self,
@@ -61,7 +64,12 @@ struct SwipeLLMApp: App {
             ContentView()
                 .id(keepAlive) // Force the view hierarchy to stay alive
                 .onAppear {
-                    addSampleWebPagesIfNeeded()
+                    if shouldResetDatabase {
+                        resetDatabase()
+                        shouldResetDatabase = false
+                    } else {
+                        addSampleWebPagesIfNeeded()
+                    }
                 }
         }
         .modelContainer(sharedModelContainer)
@@ -79,6 +87,51 @@ struct SwipeLLMApp: App {
         }
     }
     
+    // Function to reset the database and add new default pages
+    private func resetDatabase() {
+        let context = sharedModelContainer.mainContext
+        
+        do {
+            // Delete all existing pages
+            let fetchDescriptor = FetchDescriptor<WebPage>()
+            let existingPages = try context.fetch(fetchDescriptor)
+            
+            for page in existingPages {
+                context.delete(page)
+            }
+            
+            try context.save()
+            print("Deleted all existing pages")
+            
+            // Add new default pages
+            let samplePages = [
+                WebPage(url: "https://chatgpt.com", title: "ChatGPT", order: 0),
+                WebPage(url: "https://notebooklm.google", title: "Google NotebookLM", order: 1),
+                WebPage(url: "https://claude.ai", title: "Claude", order: 2),
+                WebPage(url: "https://perplexity.ai", title: "Perplexity", order: 3),
+                WebPage(url: "https://gemini.google.com/app", title: "Google Gemini", order: 4),
+                WebPage(url: "http://chat.deepseek.com", title: "DeepSeek", order: 5),
+                WebPage(url: "https://copilot.microsoft.com", title: "Microsoft Copilot", order: 6)
+            ]
+            
+            for page in samplePages {
+                context.insert(page)
+            }
+            
+            try context.save()
+            print("Added new default pages")
+            
+            // Preload all sample pages
+            for page in samplePages {
+                if !page.url.isEmpty, let url = URL(string: page.url) {
+                    WebViewCache.shared.preload(urlString: page.url)
+                }
+            }
+        } catch {
+            print("Failed to reset database: \(error)")
+        }
+    }
+    
     private func addSampleWebPagesIfNeeded() {
         let context = sharedModelContainer.mainContext
         let fetchDescriptor = FetchDescriptor<WebPage>()
@@ -87,13 +140,15 @@ struct SwipeLLMApp: App {
             let existingPages = try context.fetch(fetchDescriptor)
             
             if existingPages.isEmpty {
-                // Add sample web pages with proper order values
+                // Add AI assistant websites as default pages with proper order values
                 let samplePages = [
-                    WebPage(url: "https://www.apple.com", title: "Apple", order: 0),
-                    WebPage(url: "https://www.google.com", title: "Google", order: 1),
-                    WebPage(url: "https://www.github.com", title: "GitHub", order: 2),
-                    WebPage(url: "https://www.wikipedia.org", title: "Wikipedia", order: 3),
-                    WebPage(url: "https://www.nytimes.com", title: "New York Times", order: 4)
+                    WebPage(url: "https://chatgpt.com", title: "ChatGPT", order: 0),
+                    WebPage(url: "https://notebooklm.google", title: "Google NotebookLM", order: 1),
+                    WebPage(url: "https://claude.ai", title: "Claude", order: 2),
+                    WebPage(url: "https://perplexity.ai", title: "Perplexity", order: 3),
+                    WebPage(url: "https://gemini.google.com/app", title: "Google Gemini", order: 4),
+                    WebPage(url: "http://chat.deepseek.com", title: "DeepSeek", order: 5),
+                    WebPage(url: "https://copilot.microsoft.com", title: "Microsoft Copilot", order: 6)
                 ]
                 
                 for page in samplePages {
