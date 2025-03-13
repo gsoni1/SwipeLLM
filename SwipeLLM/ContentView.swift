@@ -11,7 +11,7 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
-    @Query private var webPages: [WebPage]
+    @Query(sort: \WebPage.order) private var webPages: [WebPage]
     @State private var currentPageIndex = 0
     @State private var showAddPageSheet = false
     @State private var showSettingsSheet = false
@@ -184,7 +184,10 @@ struct ContentView: View {
         }
         
         withAnimation {
-            let newPage = WebPage(url: newPageURL, title: newPageTitle)
+            // Set the order to be the highest current order + 1
+            let newOrder = webPages.isEmpty ? 0 : (webPages.map { $0.order }.max() ?? 0) + 1
+            
+            let newPage = WebPage(url: newPageURL, title: newPageTitle, order: newOrder)
             modelContext.insert(newPage)
             
             // Reset form fields
@@ -304,9 +307,30 @@ struct SettingsView: View {
     }
     
     private func movePages(from source: IndexSet, to destination: Int) {
-        // This is a bit tricky with SwiftData
-        // We need to update the order property if we add one
-        // For now, this is a placeholder
+        // Convert to array for easier manipulation
+        var pagesArray = webPages.map { $0 }
+        
+        // Perform the move
+        pagesArray.move(fromOffsets: source, toOffset: destination)
+        
+        // Update the order property for each page
+        for (index, page) in pagesArray.enumerated() {
+            page.order = index
+        }
+        
+        // Save changes
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to save reordering: \(error)")
+        }
+        
+        // Update current index if needed
+        if let firstSource = source.first, currentIndex == firstSource {
+            // If the moved page was the current one, update the index
+            let newIndex = firstSource < destination ? destination - 1 : destination
+            currentIndex = newIndex
+        }
     }
 }
 

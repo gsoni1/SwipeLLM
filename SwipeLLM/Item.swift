@@ -13,10 +13,12 @@ final class WebPage {
     var url: String
     var title: String
     var timestamp: Date
+    var order: Int
     
-    init(url: String, title: String, timestamp: Date = Date()) {
+    init(url: String, title: String, timestamp: Date = Date(), order: Int = 0) {
         self.url = url
         self.title = title
         self.timestamp = timestamp
+        self.order = order
     }
 }
