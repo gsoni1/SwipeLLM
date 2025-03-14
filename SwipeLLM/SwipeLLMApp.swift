@@ -75,12 +75,27 @@ struct SwipeLLMApp: App {
         .modelContainer(sharedModelContainer)
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .background {
-                // App is going to background, but we want content to remain loaded
-                // We don't clear the cache here to keep webpages loaded
+                // App is going to background
+                // Do not clear the cache or destroy WebViews
+                print("App entering background - preserving WebView state")
             } else if newPhase == .active {
                 // App becomes active
+                print("App becoming active - restoring WebView state")
                 // Refresh the keepAlive ID to ensure views are properly maintained
                 keepAlive = UUID()
+                
+                // Ensure all pages are in the cache
+                Task {
+                    let context = sharedModelContainer.mainContext
+                    let descriptor = FetchDescriptor<WebPage>(sortBy: [SortDescriptor(\WebPage.order)])
+                    if let pages = try? context.fetch(descriptor) {
+                        for page in pages {
+                            if !page.url.isEmpty, let url = URL(string: page.url) {
+                                WebViewCache.shared.preload(urlString: page.url)
+                            }
+                        }
+                    }
+                }
             } else if newPhase == .inactive {
                 // App is inactive
             }

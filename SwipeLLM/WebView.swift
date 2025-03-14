@@ -22,15 +22,22 @@ class WebViewCache: NSObject {
         if let cachedItem = cache[urlString] {
             return cachedItem.webView
         } else {
-            // Create a configuration that enables process pool sharing
+            // Create a configuration that enables process pool sharing and persistent storage
             let configuration = WKWebViewConfiguration()
             configuration.processPool = WKProcessPool.shared
             // Disable content compression
             configuration.suppressesIncrementalRendering = false
-            // Allow more memory usage
+            // Use persistent data store
             configuration.websiteDataStore = WKWebsiteDataStore.default()
             
+            // Configure preferences for better persistence
+            let preferences = WKWebpagePreferences()
+            preferences.allowsContentJavaScript = true
+            configuration.defaultWebpagePreferences = preferences
+            
             let webView = WKWebView(frame: .zero, configuration: configuration)
+            // Enable back/forward swipe navigation
+            webView.allowsBackForwardNavigationGestures = true
             // Disable jiggling when scrolling at edges
             webView.scrollView.bounces = false
             // Prevent automatic scaling
@@ -40,14 +47,20 @@ class WebViewCache: NSObject {
             
             let cachedItem = CachedWebView(webView: webView)
             cache[urlString] = cachedItem
+            
+            // Load the URL with cache-first policy
+            if let url = URL(string: urlString) {
+                let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
+                webView.load(request)
+            }
+            
             return webView
         }
     }
     
     func clearCache() {
-        cache.forEach { _, cachedItem in
-            cachedItem.webView.stopLoading()
-        }
+        // Instead of clearing everything, just clear the in-memory cache
+        // but keep the persistent data store
         cache.removeAll()
     }
     
@@ -119,8 +132,8 @@ struct WebView: UIViewRepresentable {
         let webView = WebViewCache.shared.getWebView(for: url.absoluteString)
         webView.navigationDelegate = context.coordinator
         
-        // Only load if not already loaded or if the URL is different
-        if webView.url == nil || webView.url?.absoluteString != url.absoluteString {
+        // Only load if not already loaded
+        if webView.url == nil {
             let request = URLRequest(url: url, cachePolicy: .returnCacheDataElseLoad)
             webView.load(request)
         }

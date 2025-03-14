@@ -268,48 +268,61 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationView {
-            List {
-                Section(header: Text("Appearance")) {
-                    Toggle("Dark Mode", isOn: $isDarkMode)
+            VStack {
+                List {
+                    Section(header: Text("Appearance")) {
+                        Toggle("Dark Mode", isOn: $isDarkMode)
+                    }
+                    
+                    Section(header: Text("Webpages")) {
+                        ForEach(webPages) { page in
+                            HStack {
+                                // Display URL as the primary identifier
+                                if let host = URL(string: page.url)?.host {
+                                    Text(host.replacingOccurrences(of: "www.", with: ""))
+                                        .font(.headline)
+                                } else {
+                                    Text(page.url)
+                                        .font(.headline)
+                                }
+                                
+                                Spacer()
+                                
+                                if editMode == .active {
+                                    Button(action: {
+                                        deletePage(page)
+                                    }) {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red)
+                                    }
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                if editMode == .inactive {
+                                    // Find the index of the tapped page
+                                    if let index = webPages.firstIndex(where: { $0.id == page.id }) {
+                                        currentIndex = index
+                                        isPresented = false
+                                    }
+                                }
+                            }
+                        }
+                        .onDelete(perform: deletePages)
+                        .onMove(perform: movePages)
+                    }
                 }
                 
-                Section(header: Text("Webpages")) {
-                    ForEach(webPages) { page in
-                        HStack {
-                            // Display URL as the primary identifier
-                            if let host = URL(string: page.url)?.host {
-                                Text(host.replacingOccurrences(of: "www.", with: ""))
-                                    .font(.headline)
-                            } else {
-                                Text(page.url)
-                                    .font(.headline)
-                            }
-                            
-                            Spacer()
-                            
-                            if editMode == .active {
-                                Button(action: {
-                                    deletePage(page)
-                                }) {
-                                    Image(systemName: "trash")
-                                        .foregroundColor(.red)
-                                }
-                            }
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            if editMode == .inactive {
-                                // Find the index of the tapped page
-                                if let index = webPages.firstIndex(where: { $0.id == page.id }) {
-                                    currentIndex = index
-                                    isPresented = false
-                                }
-                            }
-                        }
-                    }
-                    .onDelete(perform: deletePages)
-                    .onMove(perform: movePages)
+                Spacer()
+                
+                // Attribution at the bottom with headline font
+                HStack {
+                    Text("SwipeLLM - By")
+                        .font(.headline)
+                    Link("Gautam Soni", destination: URL(string: "https://www.linkedin.com/in/gsoni16/")!)
+                        .font(.headline)
                 }
+                .padding(.bottom, 16)
             }
             .navigationTitle("Settings")
             .navigationBarItems(
