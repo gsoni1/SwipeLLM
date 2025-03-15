@@ -1,7 +1,7 @@
 # SwipeLLM
 
 <p align="center">
-	<img alt="" src="https://github.com/gsoni1/SwipeLLM/blob/main/readmeassets/iphone-multiple-screens-mockup%20(2).png">
+	<img alt="" src="https://github.com/gsoni1/SwipeLLM/blob/main/readmeassets/SwipeLLMFrontPagePicture.png">
 	<br>
 	<span>A unified app that lets you seamlessly swipe between and use different LLMs on your iPhone — fast, simple, all in one place.</span><br><br>
 	<span>By <a href="https://www.linkedin.com/in/gsoni16/">Gautam Soni</a></small> </span><br><br>
