@@ -23,4 +23,5 @@ SwipeLLM is an app that makes it simple to use multiple LLMs at once in a unifie
 # Demos
 
 ## Navigating between LLMs
-![alt text](https://github.com/gsoni1/GradeDist/blob/main/econ2005darkmode.png)
+[![Watch the video](https://github.com/gsoni1/SwipeLLM/blob/main/readmeassets/chatgptpage.png)](https://github.com/gsoni1/SwipeLLM/blob/main/readmeassets/swipingbetweenpages.mp4)
+![alt text](https://github.com/gsoni1/SwipeLLM/blob/main/readmeassets/swipingbetweenpages.mp4)
