@@ -1,7 +1,7 @@
 # SwipeLLM
 
 <p align="center">
-	<img alt="" src="https://github.com/gsoni1/GradeDist/blob/main/highresoutput.jpg">
+	<img alt="" src="https://github.com/gsoni1/SwipeLLM/blob/main/readmeassets/iphone-multiple-screens-mockup%20(2).png">
 	<br>
 	<span>A unified app that lets you seamlessly swipe between and use different LLMs on your iPhone — fast, simple, all in one place.</span><br><br>
 	<span>By <a href="https://www.linkedin.com/in/gsoni16/">Gautam Soni</a></small> </span><br><br>
@@ -20,8 +20,24 @@ SwipeLLM is an app that makes it simple to use multiple LLMs at once in a unifie
 - Quick swipe gesture to switch between LLMs and to add a new LLM
 - Dark Mode
 
+
 # Demos
 
 ## Navigating between LLMs
-[![Watch the video](https://github.com/gsoni1/SwipeLLM/blob/main/readmeassets/chatgptpage.png)](https://github.com/gsoni1/SwipeLLM/blob/main/readmeassets/swipingbetweenpages.mp4)
-![alt text](https://github.com/gsoni1/SwipeLLM/blob/main/readmeassets/swipingbetweenpages.mp4)
+https://github.com/user-attachments/assets/7ba0d73e-ab90-4d19-bf4c-0aec54bf6227
+
+https://github.com/user-attachments/assets/e9d1d2c8-90c8-4bc7-858a-3606a6cdc9bf
+
+## Add new LLM page
+https://github.com/user-attachments/assets/cb9ebf5f-a36f-4698-bcff-ff40d2d2eca7
+
+## Reorder LLM pages
+https://github.com/user-attachments/assets/211ab8e1-46bd-4fc9-9179-7cd1e48a812c
+
+## Swipe and hold to quickly swipe between pages
+https://github.com/user-attachments/assets/f6aeb7ae-f4dd-444d-b385-4e4343ddd7af
+
+## Dark Mode
+https://github.com/user-attachments/assets/e50b1e4f-9ca8-49cb-8b2a-9bc45a4b85c6
+
+
