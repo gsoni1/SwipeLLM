@@ -20,6 +20,12 @@ SwipeLLM is an app that makes it simple to use multiple LLMs at once in a unifie
 - Quick swipe gesture to switch between LLMs and to add a new LLM
 - Dark Mode
 
+## Product Requirements Document
+<span> <a href="https://docs.google.com/document/d/1_NapplREoKc1rNjbHc9OPBCL9lh-odBAeIR4t0p_rHA/edit?usp=sharing"> See the Google Doc</a></small> </span><br><br>
+
+## Project Management
+<span> <a href="https://gsoni1.notion.site/swipellm?pvs=74">See the Notion page for SwipeLLM</a></small> </span><br><br>
+
 
 # Demos
 
